@@ -23,11 +23,11 @@
         export default function Home() {
           return (
             <Page>
-              <Navbar title="My App" />
+              <Navbar className='bg-green-400' title="My App" />
         
               <Block strong>
                 <p>
-                  Here is your Next.js & Konsta UI app. Let's see what we have here.
+                  Here is your Next.js & Konsta UI app. Lets see what we have here.
                 </p>
               </Block>
               <BlockTitle>Navigation</BlockTitle>

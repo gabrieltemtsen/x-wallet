@@ -1,15 +1,7 @@
-
-
-          
-    
-      
-    
-          
-    
-      
-    
+   
         // Konsta UI components
-        import {
+        import Layout from '@/components/Layout';
+import {
           Page,
           Navbar,
           Block,
@@ -19,28 +11,29 @@
           Link,
           BlockTitle,
         } from 'konsta/react';
+        import { useConvexAuth } from "convex/react";
+      import { useAuth0 } from "@auth0/auth0-react";
+      import Auth from './auth';
+      import useStoreUserEffect from "../hooks/useStoreUserEffect";
+
         
         export default function Home() {
+          const { isLoading, isAuthenticated } = useConvexAuth();
+          const { user } = useAuth0();
+          const userId = useStoreUserEffect();
+
+
+          if (!isAuthenticated) {
+            return (
+              <Auth />
+            );
+          }
+
+           
           return (
-            <Page>
-              <Navbar className='bg-green-400' title="My App" />
-        
-              <Block strong>
-                <p>
-                  Here is your Next.js & Konsta UI app. Lets see what we have here.
-                </p>
-              </Block>
-              <BlockTitle>Navigation</BlockTitle>
-              <List>
-                <ListItem href="/about/" title="About" />
-                <ListItem href="/form/" title="Form" />
-              </List>
-        
-              <Block strong className="flex space-x-4">
-                <Button>Button 1</Button>
-                <Button>Button 2</Button>
-              </Block>
-            </Page>
+            <Layout>
+               <Navbar  title="X-wallet" />
+              </Layout>
           );
         }
         

@@ -8,6 +8,9 @@ module.exports =  konstaConfig({
   ],
   darkMode: 'media', // or 'media' or 'class'
   theme: {
+    fontFamily: {
+      material: 'Space Grotesk',
+    },
     extend: {
       
     },

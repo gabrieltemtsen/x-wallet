@@ -41,6 +41,29 @@ import {
           balance: 5,
         },
       ];
+      const nfts = [
+        {
+          id: 1,
+          image: 'https://example.com/nft-image1.png',
+          title: 'CryptoPunk #1234',
+          description: 'Rare CryptoPunk with sunglasses',
+          price: 5.0,
+        },
+        {
+          id: 2,
+          image: 'https://example.com/nft-image2.png',
+          title: 'Art Blocks #5678',
+          description: 'Generative art piece',
+          price: 10.0,
+        },
+        {
+          id: 3,
+          image: 'https://example.com/nft-image3.png',
+          title: 'Decentraland Parcel',
+          description: 'Virtual land in Decentraland',
+          price: 100.0,
+        },
+      ];
         
         export default function Home() {
           const { isLoading, isAuthenticated } = useConvexAuth();
@@ -60,8 +83,13 @@ import {
             <Layout>
                <Navbar  title="X-wallet" />
                <Block strong>
+              
                 <div className='flex flex-col m-3 align-center justify-center items-center '>
+                <span className='text-lg font-bold'>
+                      WALLET
+                    </span>
                   <div className='flex flex-row m-3 p-4 gap-10 justify-center'>
+                    
                     <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block max-w-3xl w-7.9 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option>France</option>
                     <option>Germany</option>
@@ -137,6 +165,29 @@ import {
         
        
         )}
+
+        {activeTab === 'nft' && (
+          <>
+          {nfts.map(nft => (
+        <div key={nft.id} className="flex items-center p-4 border-b border-gray-300">
+          <img src={nft.image} alt={nft.title} className="w-16 h-16 mr-4" />
+          <div>
+            <h2 className="text-xl font-semibold mb-1">{nft.title}</h2>
+            <p className="text-gray-600 mb-1">{nft.description}</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-gray-600">Price:</p>
+              </div>
+              <div>
+                <p className="text-gray-600">${nft.price}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+          </>
+        )}
+
      
               </Layout>
           );

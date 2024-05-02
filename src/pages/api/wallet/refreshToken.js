@@ -8,20 +8,17 @@ export default async function handler(req, res) {
     const { userId } = req.body;
 
     try {
-        // Create user
-         CircleClient.createUser({ userId });
+       
 
         // Create user session
         const createSession = await CircleClient.createUserToken({ userId });
 
-        // Create user pin with wallets
-        const createUserPinWithWallets = await CircleClient.createUserPin({ userId });
+       
 
         // Response data
         const data = {
             userToken: createSession.data.userToken,
             encryptionKey: createSession.data.encryptionKey,
-            challengeId: createUserPinWithWallets.data.challengeId
         }
 
         return res.status(200).json({ data });

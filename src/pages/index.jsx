@@ -20,13 +20,15 @@ import {
       import { useAuth0 } from "@auth0/auth0-react";
       import Auth from './auth';
       import useStoreUserEffect from "../hooks/useStoreUserEffect";
-      import { useState } from 'react';
-      import { useAction, useQuery } from 'convex/react'
+      import { use, useState } from 'react';
+      import { useAction, useQuery, useMutation } from 'convex/react'
       import { api } from '../../convex/_generated/api'
       import { useEffect } from 'react';
 import Loader from '@/components/X-Loader';
 import Layout from "@/components/Layout";
+import { useRouter } from "next/router";
 import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
+import { useUserContext } from "@/context/UserContext";
 
       const tokens = [
         {
@@ -43,13 +45,7 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
           price: 1.0,
           balance: 10000,
         },
-        {
-          id: 3,
-          logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Ethereum_logo_2014.svg/1257px-Ethereum_logo_2014.svg.png',
-          title: 'Binance Coin (BNB)',
-          price: 400,
-          balance: 5,
-        },
+       
       ];
       const nfts = [
         {
@@ -76,16 +72,21 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
       ];
       let CircleClient;
       const CIRCLE_APP_ID = process.env.NEXT_PUBLIC_CIRCLE_APP_ID;
-      console.log(CIRCLE_APP_ID);
 
         
         export default function Home() {
           const {userId, userInfo} = useStoreUserEffect();
           const { user } = useAuth0();
           const { isLoading, isAuthenticated } = useConvexAuth();
-          
+          const router = useRouter();
+          const updatePinState = useMutation(api.users.updatePinState);
+          const {setData, userToken, encryptionKey, updateWalletId, walletId} = useUserContext();
+          const [selectedWallet, setSelectedWallet] = useState(null);
+          const [tokensBalances, setTokensBalances] = useState([]);
           
           const [sheetOpened, setSheetOpened] = useState(false);
+
+          const [transferSheetOpened, setTransferSheetOpened] = useState(false);
           const [walletName, setWalletName] = useState("");
           const [walletDescription, setWalletDescription] = useState("");
           const [inTxn, setInTxn] = useState(false);
@@ -93,75 +94,222 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
          
           const [activeTab, setActiveTab] = useState('token');
           const [delayComplete, setDelayComplete] = useState(false);
+          const [wallets, setWallets] = useState([]);
 
           useEffect(() => {
             CircleClient = new W3SSdk();
-          }, []);
+          }, [userId, userToken, encryptionKey]);
 
-          async function executeChallenge(id) {
+          async function executeChallenge() {
             console.log('Tryinggg')
+            if (!userId) {
+              router.push('/');
+              return;
+            }
             try {
+              setInTxn(true);
               const response = await fetch('/api/wallet/createUser', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ userId: id }),
+                body: JSON.stringify({ userId: userId }),
               });
-              console.log(response)
+              
               if (response.ok) {
-                const { encryptionKey, userToken, challengeId } = response;
+                const { data } = await response.json();
+                const { userToken, encryptionKey, challengeId } = data;
+                
+                // console.log(userToken, encryptionKey, challengeId);
+
+                setData(userToken, encryptionKey, userId, '');
 
                 CircleClient.setAppSettings({
                   appId: CIRCLE_APP_ID,
                 });
-            
+          
                 CircleClient.setAuthentication({
                   encryptionKey,
                   userToken,
                 });
-            
+          
                 await new Promise((resolve, reject) => {
                   CircleClient.execute(challengeId, async (error) => {
                     if (error) {
                       alert(error?.message);
                       reject(error);
                     }
-            
+          
                     resolve(null);
                   });
                 });
-            
-              } 
+                setInTxn(false);
+                
+                const updatePinStateResponse = await updatePinState({id: userId});
+                console.log(' response', updatePinStateResponse);
+                alert('Account set up successfully');
+                router.push("/");
+                
+              } else {
+                console.error('Failed to create user');
+                const data = await response.json();
+                console.error(data.error);
+                setInTxn(false);
+              }
               
             } catch (error) {
-              console.log(error)
+              console.error('Error creating user:', error);
             }
-
-
-           
           }
+
+          const createWallet = async () => {
+            try {
+              setInTxn(true);
+              const response = await fetch('/api/wallet/createWallet', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: userId, name: walletName, description: walletDescription, userToken }),
+              });
+          
+              if (response.ok) {
+                const { data } = await response.json();
+
+                 const {challengeId} = data;
+                 console.log(CIRCLE_APP_ID, 'chai')
+                 console.log(challengeId)
+
+                 CircleClient.setAppSettings({
+                  appId: '3df1d810-6b73-551d-8cc9-7a3e90ba37ec',
+                });
+          
+                CircleClient.setAuthentication({
+                  encryptionKey,
+                  userToken,
+                });
+          
+                await new Promise((resolve, reject) => {
+                  CircleClient.execute(challengeId, async (error) => {
+                    if (error) {
+                      alert(error?.message);
+                      reject(error);
+                    }
+          
+                    resolve(null);
+                  });
+                });
+
+                
+                
+                // setWallets([...wallets, wallet]);
+                alert('Wallet created successfully');
+                getAllWallets();
+                setSheetOpened(false);
+                setInTxn(false);
+              } else {
+                console.error('Failed to create wallet');
+                setInTxn(false);
+              }
+            } catch (error) {
+              console.error('Error creating wallet:', error);
+              setInTxn(false);
+            }
+          }
+
+          const getAllWallets = async () => {
+            try {
+              const response = await fetch('/api/wallet/getAllWallets', {
+                method: 'POST', // Change method to POST
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: userId, userToken: userToken }), // Include userId and userToken in the request body
+              });
+          
+              if (response.ok) {
+                const { data } = await response.json();
+                const { wallets } = data;
+                setWallets(wallets);
+              } else {
+                console.error('Failed to get wallets');
+              }
+            } catch (error) {
+              console.error('Error getting wallets:', error);
+            }
+          };
+          const getAllTokenBalances = async () => {
+            try {
+              const response = await fetch('/api/wallet/fetchWalletTokenBalance', {
+                method: 'POST', // Change method to POST
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: userId, userToken: userToken, walletId: walletId }), // Include userId and userToken in the request body
+              });
+          
+              if (response.ok) {
+                const { data } = await response.json();
+                const { wallets } = data;
+                setTokensBalances(wallets);
+              } else {
+                console.error('Failed to get wallets balnaces');
+              }
+            } catch (error) {
+              console.error('Error getting wallets balances:', error);
+            }
+          };
+          useEffect(() => {
+            getAllTokenBalances()
+            if (user) {
+              getAllWallets();
+              
+            }
+          }
+          , [user, walletId]);
+          
         
           useEffect(() => {
+
+           
+
+            
 
             setUserPinSet(userInfo?.isPinSet);
 
+
              const timer = setTimeout(() => {
 
+
               setDelayComplete(true);
+              const refreshToken = async () => {
+                try {
+                  const response = await fetch('/api/wallet/refreshToken', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: userId }),
+                  });
+                  if (response.ok) {
+                    const { data } = await response.json();
+                    const { userToken, encryptionKey } = data;
+                    setData(userToken, encryptionKey, userId, '');
+                  } else {
+                    console.error('Failed to refresh token');
+                  }
+                } catch (error) {
+                  console.error('Error refreshing token:', error);
+                }
+                
+              }
+              refreshToken()
             }, 4500); // 4.5 seconds delay
+            
         
             return () => clearTimeout(timer);
           }, [user,userId]);
-          useEffect(() => {
-            
-            if(isAuthenticated && !userPinSet && delayComplete) {
-
-              executeChallenge(userId);
-            }
         
-            
-          }, [userId]);
 
           if(!delayComplete) {
             return (
@@ -174,6 +322,31 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
               <Auth />
             );
           }
+          if(isAuthenticated && !userPinSet && delayComplete) {
+
+            return (
+              <Block>
+                <div className="flex flex-col items-center justify-center">
+                  <span className="text-lg font-bold">Welcome Onboard, {user?.name}</span>
+                
+                  {inTxn ? ( 
+                    <Preloader className="center-item" />
+                  ) : (
+                    <Button
+                    onClick={() => {
+                      executeChallenge(userId);
+                    }}
+                    className="w-2/3 max-w-sm"
+                  >
+                    Click to set up your account
+                  </Button>
+                  )}
+                </div>
+                </Block>
+            )
+
+            
+          }
           
 
            
@@ -181,26 +354,42 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
             <Layout>
                <Navbar  title="X-wallet" />
                <Block strong>
-              
-                <div className='flex flex-col m-3 align-center justify-center items-center '>
-                <span className='text-lg font-bold'>
-                      WALLET
-                    </span>
-                  <div className='flex flex-row m-3 p-4 gap-10 justify-center'>
-                    
-                    <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block max-w-3xl w-7.9 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option>France</option>
-                    </select>
-
-                    <Button onClick={() => setSheetOpened(true)} className=' w-2/2 max-w-sm'>
-                      add Wallet
-                    </Button>
-
-                  </div>
-                  <span className='text-lg font-bold'> $ 0 </span>
-                </div>
-                  
-               </Block>
+  <div className='flex flex-col m-3 align-center justify-center items-center '>
+    <span className='text-lg font-bold'>
+      WALLET
+    </span>
+    <div className='flex flex-row m-3 p-4 gap-10 justify-center'>
+      <select
+        id="wallets"
+        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block max-w-3xl w-7.9 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        onChange={(e) => {
+          const selectedWalletId = e.target.value;
+          const selectedWallet = wallets.find(wallet => wallet.id === selectedWalletId);
+          if (selectedWallet) {
+            const walletId = selectedWalletId;
+            updateWalletId(walletId);
+            setSelectedWallet(selectedWallet);
+          }
+        }}
+      >
+        <option value="">Select a wallet</option>
+        {wallets.map(wallet => (
+          <option key={wallet.id} value={wallet.id}>{wallet.name}</option>
+        ))}
+      </select>
+      <Button onClick={() => setSheetOpened(true)} className='w-2/2 max-w-sm'>
+        Add Wallet
+      </Button>
+    </div>
+    <span className='text-lg font-bold'> $ 0 </span>
+    {selectedWallet && (
+      <div>
+        <p>Selected Wallet: {selectedWallet.name}</p>
+        <p>Wallet Address: {selectedWallet.address}</p>
+      </div>
+    )}
+  </div>
+</Block>
                <BlockTitle>Block Title</BlockTitle>
 
                <Block>Add here</Block>
@@ -224,17 +413,17 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
       </div>
       {activeTab === 'token' && (
         <> 
-        <div className="flex justify-between w-full p-8">
-         <div className="flex flex-col items-center">
+        <div className="flex justify-between w-full p-8 ">
+         <div className="flex flex-col items-center cursor-pointer">
            <span className="text-3xl mb-2">&#10148;</span>
            <p className="text-md">Send</p>
          </div>
          <div className="flex flex-col items-center">
-           <span className="text-3xl mb-2">&#128230;</span>
+           <span className="text-3xl mb-2 cursor-pointer">&#128230;</span>
            <p className="text-md">Receive</p>
          </div>
          <div className="flex flex-col items-center">
-           <span className="text-3xl mb-2">&#8646;</span>
+           <span onClick={(e)=> {alert('coming soon')}} className="text-3xl mb-2 cursor-pointer">&#8646;</span>
            <p className="text-md">Swap</p>
          </div>
        </div> 
@@ -365,7 +554,7 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
 
                 {!inTxn ? (
                   <Button
-                    onClick={(e)=> {return}}
+                    onClick={createWallet}
                     class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                   >
                     Create
@@ -376,7 +565,7 @@ import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
               </div>
             </div>
           </div>
-        </Sheet>
+</Sheet>
      
               </Layout>
           );

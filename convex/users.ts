@@ -57,7 +57,9 @@ export const updatePinState = mutation({
 
     // Add `tag` and overwrite `status`:
     await ctx.db.patch(id, { isPinSet: true });
+
     console.log(await ctx.db.get(id));
+    return true;
    
   },
 });

@@ -1,40 +1,65 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# X-Wallet
 
-## Getting Started
+X-Wallet is a mobile-first wallet application designed to be user-friendly and easily accessible. It's built to make managing cryptocurrencies and NFTs simpler and more efficient. The application has been developed using ConvexDev for the backend and database, ensuring reliability and security. Additionally, X-Wallet integrates with Auth0 for social login and email notifications, allowing for seamless onboarding and user communication.
 
-First, run the development server:
+## Core Functionalities
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Social Login
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+X-Wallet allows users to sign up and log in using their existing social accounts, such as Google. This makes the onboarding process smoother and more user-friendly. Upon successful authentication, users are directed to their dashboard, where they can manage their wallets and transactions.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+### Email Notifications
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+To keep users informed, X-Wallet sends email notifications for account creation, successful transactions, and other important updates. This feature ensures that users are always aware of their account activities and can easily track their transactions.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+### ConvexDev Integration
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+The backend and database of X-Wallet are powered by ConvexDev, ensuring robustness, security, and scalability. This integration allows for smooth data management, efficient transaction processing, and reliable user authentication.
 
-## Learn More
+## Additional Features
 
-To learn more about Next.js, take a look at the following resources:
+### Wallet Management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+X-Wallet enables users to create, manage, and track multiple wallets. Users can easily add new wallets, check their balances, and view transaction histories. The application supports a wide range of cryptocurrencies and NFTs, making it a versatile and comprehensive wallet solution.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### Mobile-First Design
 
-## Deploy on Vercel
+X-Wallet has been developed with a mobile-first approach, making it accessible to users on a wide range of devices. The application's responsive design ensures that users have a seamless experience regardless of their device's screen size or resolution.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Code Overview
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+X-Wallet is built using NextJs for the frontend, ConvexDev for the backend, and Auth0 for social login and email notifications. 
+
+### Technologies Used
+
+- NextJs
+- Circle SDK
+- Konsta UI
+- FlowBite UI
+- ConvexDev
+- Auth0
+- Tailwind CSS
+
+## Demo
+
+You can access X-Wallet [here](https://x-wallet-circle.vercel.app/).
+
+## Installation
+
+1. Clone the repository: git clone [x-wallet](https://github.com/gabrieltemtsen/x-wallet)
+2. Install dependencies: npm install
+3. Run the application: npm run dev
+
+# Usage
+
+To use X-Wallet, follow these steps:
+
+1. Sign up or log in using your social account.
+2. Create and manage your wallets.
+3. Track your transactions and balances.
+4. Receive email notifications for important updates and activities.
+
+## Conclusion
+
+X-Wallet is a versatile and user-friendly wallet application that simplifies cryptocurrency and NFT management. With its intuitive interface, robust backend, and seamless integrations, X-Wallet offers users a secure, efficient, and enjoyable experience.
+

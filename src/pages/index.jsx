@@ -1,22 +1,32 @@
-   
-        // Konsta UI components
-        import Layout from '@/components/Layout';
+/* eslint-disable @next/next/no-img-element */
 import {
-          Page,
-          Navbar,
-          Block,
-          Button,
-          List,
-          TabbarLink,
-          ListItem,
-          Link,
-          BlockTitle,
-        } from 'konsta/react';
+  Page,
+  Navbar,
+  Block,
+  Button,
+  List,
+  ListItem,
+  Link,
+  TabbarLink,
+  Sheet,
+  Preloader,
+  Notification,
+  BlockTitle,
+  Toast,
+  Chip,
+} from "konsta/react";
+
         import { useConvexAuth } from "convex/react";
       import { useAuth0 } from "@auth0/auth0-react";
       import Auth from './auth';
       import useStoreUserEffect from "../hooks/useStoreUserEffect";
       import { useState } from 'react';
+      import { useAction, useQuery } from 'convex/react'
+      import { api } from '../../convex/_generated/api'
+      import { useEffect } from 'react';
+import Loader from '@/components/X-Loader';
+import Layout from "@/components/Layout";
+import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
 
       const tokens = [
         {
@@ -64,19 +74,107 @@ import {
           price: 100.0,
         },
       ];
+      let CircleClient;
+      const CIRCLE_APP_ID = process.env.NEXT_PUBLIC_CIRCLE_APP_ID;
+      console.log(CIRCLE_APP_ID);
+
         
         export default function Home() {
-          const { isLoading, isAuthenticated } = useConvexAuth();
+          const {userId, userInfo} = useStoreUserEffect();
           const { user } = useAuth0();
-          const userId = useStoreUserEffect();
+          const { isLoading, isAuthenticated } = useConvexAuth();
+          
+          
+          const [sheetOpened, setSheetOpened] = useState(false);
+          const [walletName, setWalletName] = useState("");
+          const [walletDescription, setWalletDescription] = useState("");
+          const [inTxn, setInTxn] = useState(false);
+          const [userPinSet, setUserPinSet] = useState(false);
+         
           const [activeTab, setActiveTab] = useState('token');
+          const [delayComplete, setDelayComplete] = useState(false);
 
+          useEffect(() => {
+            CircleClient = new W3SSdk();
+          }, []);
+
+          async function executeChallenge(id) {
+            console.log('Tryinggg')
+            try {
+              const response = await fetch('/api/wallet/createUser', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: id }),
+              });
+              console.log(response)
+              if (response.ok) {
+                const { encryptionKey, userToken, challengeId } = response;
+
+                CircleClient.setAppSettings({
+                  appId: CIRCLE_APP_ID,
+                });
+            
+                CircleClient.setAuthentication({
+                  encryptionKey,
+                  userToken,
+                });
+            
+                await new Promise((resolve, reject) => {
+                  CircleClient.execute(challengeId, async (error) => {
+                    if (error) {
+                      alert(error?.message);
+                      reject(error);
+                    }
+            
+                    resolve(null);
+                  });
+                });
+            
+              } 
+              
+            } catch (error) {
+              console.log(error)
+            }
+
+
+           
+          }
+        
+          useEffect(() => {
+
+            setUserPinSet(userInfo?.isPinSet);
+
+             const timer = setTimeout(() => {
+
+              setDelayComplete(true);
+            }, 4500); // 4.5 seconds delay
+        
+            return () => clearTimeout(timer);
+          }, [user,userId]);
+          useEffect(() => {
+            
+            if(isAuthenticated && !userPinSet && delayComplete) {
+
+              executeChallenge(userId);
+            }
+        
+            
+          }, [userId]);
+
+          if(!delayComplete) {
+            return (
+             <Loader />
+            );
+          }
 
           if (!isAuthenticated) {
             return (
               <Auth />
             );
           }
+          
 
            
           return (
@@ -92,10 +190,9 @@ import {
                     
                     <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block max-w-3xl w-7.9 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option>France</option>
-                    <option>Germany</option>
                     </select>
 
-                    <Button className=' w-2/2 max-w-sm'>
+                    <Button onClick={() => setSheetOpened(true)} className=' w-2/2 max-w-sm'>
                       add Wallet
                     </Button>
 
@@ -187,7 +284,99 @@ import {
       ))}
           </>
         )}
+  <Sheet
+          className="pb-safe"
+          opened={sheetOpened}
+          onBackdropClick={() => setSheetOpened(false)}
+        >
+          <div class="relative p-4 w-full max-w-md max-h-full mb-15">
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+              <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  Create Wallet
+                </h3>
+                <button
+                  onClick={(e) => {
+                    setSheetOpened(false);
+                  }}
+                  type="button"
+                  class="end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                  data-modal-hide="authentication-modal"
+                >
+                  <svg
+                    class="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                    />
+                  </svg>
+                  <span class="sr-only">Close modal</span>
+                </button>
+              </div>
+              <div class="p-4 md:p-5">
+                <div>
+                  <label
+                    for="email"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Wallet Name
+                  </label>
+                  <input
+                    onChange={(e) => {
+                      setWalletName(e.target.value);
+                    }}
+                    type="text"
+                    name="text"
+                    id="text"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                    placeholder="e.g Portfolio 101"
+                    required
+                  />
+                </div>
 
+                <div className="mt-2 mb-3">
+                  <label
+                    for="email"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Wallet Description
+                  </label>
+                  <input
+                    onChange={(e) => {
+                      setWalletDescription(e.target.value);
+                    }}
+                    type="text"
+                    name="text"
+                    id="text"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                    placeholder="desc"
+                    required
+                  />
+                </div>
+               
+
+                {!inTxn ? (
+                  <Button
+                    onClick={(e)=> {return}}
+                    class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  >
+                    Create
+                  </Button>
+                ) : (
+                  <Preloader className="center-item " />
+                )}
+              </div>
+            </div>
+          </div>
+        </Sheet>
      
               </Layout>
           );

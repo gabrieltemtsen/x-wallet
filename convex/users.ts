@@ -1,5 +1,5 @@
-import { mutation } from "./_generated/server";
-
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
 /**
  * Insert or update the user in a Convex table then return the document's ID.
  *
@@ -32,12 +32,54 @@ export const store = mutation({
       if (user.name !== identity.name) {
         await ctx.db.patch(user._id, { name: identity.name });
       }
-      return user._id;
+      return user;
     }
     // If it's a new identity, create a new `User`.
     return await ctx.db.insert("users", {
       name: identity.name!,
+      isPinSet: false,
       tokenIdentifier: identity.tokenIdentifier,
     });
+  },
+});
+/**
+ * Set the `isPinSet` value of a user to true.
+ *
+ * @param userId - The ID of the user.
+ */
+
+export const updatePinState = mutation({
+  args: { id: v.id("users") },
+  handler: async (ctx, args) => {
+    const { id } = args;
+    console.log(await ctx.db.get(id));
+    // { text: "foo", status: { done: true }, _id: ... }
+
+    // Add `tag` and overwrite `status`:
+    await ctx.db.patch(id, { isPinSet: true });
+    console.log(await ctx.db.get(id));
+   
+  },
+});
+/**
+ * Retrieve the user information by ID.
+ *
+ * @param userId - The ID of the user.
+ * @returns The user information.
+ */
+export const getUser = query({
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+   if(args.userId){
+      const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("_id"), args.userId))
+      .unique();
+      return user;
+   } else {
+       return null;
+   }
+  
+
   },
 });

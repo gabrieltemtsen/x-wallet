@@ -103,7 +103,7 @@ import { useUserContext } from "@/context/UserContext";
           async function executeChallenge() {
             console.log('Tryinggg')
             if (!userId) {
-              router.push('/');
+              router.reload();
               return;
             }
             try {

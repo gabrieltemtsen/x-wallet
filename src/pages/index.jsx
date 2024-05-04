@@ -111,6 +111,7 @@ import { useUserContext } from "@/context/UserContext";
           async function executeChallenge() {
             console.log('Tryinggg')
             if (!storedUserId) {
+              alert('sorry please try again')
               router.reload();
               return;
             }

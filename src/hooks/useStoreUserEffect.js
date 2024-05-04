@@ -3,14 +3,18 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api"; 
+import { useUserContext } from "@/context/UserContext";
+
 export default function useStoreUserEffect() {
   const { isAuthenticated } = useConvexAuth();
-  const { user } = useAuth0();
+
+  const { user } = useAuth0(); 
   // When this state is set we know the server
   // has stored the user.
   const [userId, setUserId] = useState(null);
   const storeUser = useMutation(api.users.store);
   const [userInfo, setUserInfo] = useState(null);
+  const {updateUserId} = useUserContext();
 
  
 
@@ -26,6 +30,10 @@ export default function useStoreUserEffect() {
     // object on the server. You don't need to pass anything manually here.
     async function createUser() {
       const id = await storeUser();
+      updateUserId(id._id);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('newUid', id._id);
+      }
       setUserInfo(id);
       setUserId(id._id);
     }

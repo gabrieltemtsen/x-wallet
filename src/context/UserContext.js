@@ -15,7 +15,7 @@ export const useUserContext = () => useContext(UserContext);
 export const UserContextProvider = ({ children }) => {
   const [userToken, setUserToken] = useState(null);
   const [encryptionKey, setEncryptionKey] = useState(null);
-  const [userId, setUserId] = useState(null);
+  const [uId, setUId] = useState(null);
   const [walletId, setWalletId] = useState(null);
 
   useEffect(() => {
@@ -23,25 +23,25 @@ export const UserContextProvider = ({ children }) => {
     const userToken = localStorage.getItem('userToken');
     const encryptionKey = localStorage.getItem('encryptionKey');
     const walletId = localStorage.getItem('walletId');
-    const userId = localStorage.getItem('userId');
+    const userId = localStorage.getItem('uId');
     if (userToken && encryptionKey && userId || walletId) {
       setUserToken(userToken);
       setEncryptionKey(encryptionKey);
       setWalletId(walletId);
-      setUserId(userId);
+      setUId(userId);
     }
   }, []);
 
-  const setData = (userToken, encryptionKey, userId, walletId) => {
+  const setData = (userToken, encryptionKey, uId, walletId) => {
     // Save user data and token to localStorage when user logs in
     localStorage.setItem('userToken', userToken);
     localStorage.setItem('encryptionKey', encryptionKey);
     localStorage.setItem('walletId', walletId);
-    localStorage.setItem('userId', userId);
+    localStorage.setItem('uId', uId);
     setUserToken(userToken);
     setEncryptionKey(encryptionKey);
     setWalletId(walletId);
-    setUserId(userId);
+    setUId(uId);
   }
 
   const updateWalletId = (walletId) => {
@@ -49,6 +49,13 @@ export const UserContextProvider = ({ children }) => {
     localStorage.setItem('walletId', walletId);
 
     setWalletId(walletId);
+
+  }
+  const updateUserId = (uId) => {
+
+    localStorage.setItem('uId', uId);
+
+    setWalletId(uId);
 
   }
 
@@ -61,11 +68,11 @@ export const UserContextProvider = ({ children }) => {
     setUserToken(null);
     setEncryptionKey(null);
     setWalletId(null); 
-    setUserId(null);
+    setUId(null);
   }
 
   return (
-    <UserContext.Provider value={{ userToken, encryptionKey, userId, walletId, setData, updateWalletId, logout }}>
+    <UserContext.Provider value={{ userToken, encryptionKey, uId, walletId, setData,updateUserId, updateWalletId, logout, uId }}>
       {children}
     </UserContext.Provider>
   );

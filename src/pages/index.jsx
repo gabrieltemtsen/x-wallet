@@ -80,9 +80,10 @@ import { useUserContext } from "@/context/UserContext";
           const { isLoading, isAuthenticated } = useConvexAuth();
           const router = useRouter();
           const updatePinState = useMutation(api.users.updatePinState);
-          const {setData, userToken, encryptionKey, updateWalletId, walletId} = useUserContext();
+          const {setData, userToken, encryptionKey, updateWalletId, walletId, uId} = useUserContext();
           const [selectedWallet, setSelectedWallet] = useState(null);
           const [tokensBalances, setTokensBalances] = useState([]);
+          const [storedUserId, setStoredUserId] = useState('');
           
           const [sheetOpened, setSheetOpened] = useState(false);
 
@@ -100,9 +101,16 @@ import { useUserContext } from "@/context/UserContext";
             CircleClient = new W3SSdk();
           }, [userId, userToken, encryptionKey]);
 
+          useEffect(() => {
+            const storedUserIds = localStorage.getItem('newUid');
+            if (storedUserIds) {
+              setStoredUserId(storedUserIds);
+            }
+          }, []);
+
           async function executeChallenge() {
             console.log('Tryinggg')
-            if (!userId) {
+            if (!storedUserId) {
               router.reload();
               return;
             }
@@ -113,7 +121,7 @@ import { useUserContext } from "@/context/UserContext";
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ userId: userId }),
+                body: JSON.stringify({ userId: storedUserId }),
               });
               
               if (response.ok) {
@@ -145,11 +153,7 @@ import { useUserContext } from "@/context/UserContext";
                 });
                 setInTxn(false);
                 
-                const updatePinStateResponse = await updatePinState({id: userId});
-                console.log(' response', updatePinStateResponse);
-                alert('Account set up successfully');
-                router.push("/");
-                
+                const updatePinStateResponse = await updatePinState({id: userId});userId
               } else {
                 console.error('Failed to create user');
                 const data = await response.json();
@@ -158,6 +162,7 @@ import { useUserContext } from "@/context/UserContext";
               }
               
             } catch (error) {
+              setInTxn(false);
               console.error('Error creating user:', error);
             }
           }

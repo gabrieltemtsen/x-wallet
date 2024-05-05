@@ -22,7 +22,7 @@ const Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDelayComplete(true);
-    }, 4500); // 4.5 seconds delay
+    }, 3000); // 3 seconds delay
 
     return () => clearTimeout(timer);
   }, []);

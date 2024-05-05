@@ -154,7 +154,8 @@ import { useUserContext } from "@/context/UserContext";
                 });
                 setInTxn(false);
                 
-                const updatePinStateResponse = await updatePinState({id: userId});userId
+                const updatePinStateResponse = await updatePinState({id: userId})
+                router.reload();
               } else {
                 console.error('Failed to create user');
                 const data = await response.json();
@@ -183,8 +184,8 @@ import { useUserContext } from "@/context/UserContext";
                 const { data } = await response.json();
 
                  const {challengeId} = data;
-                 console.log(CIRCLE_APP_ID, 'chai')
-                 console.log(challengeId)
+                //  console.log(CIRCLE_APP_ID, 'chai')
+                //  console.log(challengeId)
 
                  CircleClient.setAppSettings({
                   appId: '3df1d810-6b73-551d-8cc9-7a3e90ba37ec',
@@ -310,7 +311,7 @@ import { useUserContext } from "@/context/UserContext";
                 
               }
               refreshToken()
-            }, 4500); // 4.5 seconds delay
+            }, 3000); // 3 seconds delay
             
         
             return () => clearTimeout(timer);
